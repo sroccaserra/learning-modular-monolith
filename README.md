@@ -1,4 +1,6 @@
-But : apprendre quelques concepts autour de la notion de monolithe modulaire.
+## But
+
+Apprendre quelques concepts autour de la notion de monolithe modulaire.
 
 Je m'intéresse beaucoup à la notion de monolithe modulaire, en pensant que
 cette notion peut m'aider à gérer la complexité et diminuer le couplage entre
@@ -46,6 +48,44 @@ convenir :
 - Cette commande déclenche l'événement "New User Registered".
 - Cet événement se propage dans le module "Meetings", et donne lieu à la
   commande "Create Member".
+
+## Apprentissages
+
+- Les opérations métier sont faciles à lire et à naviguer, tout est explicite
+- Dans l'exemple "Modular Monolith with DDD", les choix d'architectures sont
+  bien documentés
+    - Les lectures sont séparées des écritures
+    - Une archi à deux couches pour les lectures
+    - Une clean architecture à quatre couches pour les écritures
+    - Quatre modules séparés
+    - Pas d'appels directs entre modules
+    - Communication événementielle entre modules
+    - Utiliser un bus d'événements en mémoire
+    - <https://github.com/kgrzybek/modular-monolith-with-ddd/tree/de6e0b5/docs/architecture-decision-log>
+- Les événements métier sont ajoutés dans les racines d'agrégats lors
+  d'opérations métier
+- Il n'est pas simple de voir le lien entre les événements métier dans les
+  racines d'agrégats et leur publication dans le bus d'événements : le code et
+  la configuration Infra sont plus difficiles à lire que le code métier,
+  beaucoup d'implicite et d'enregistrement des types par réflexion qui peut
+  ressembler à de la magie
+    - Les containers d'injection de dépendances sont configurés dans les
+      `ProcessingModule`
+    - Les `UnitOfWorkCommandHandlerDecorator` sont associés aux
+      `ICommandHandler` dans les `ProcessingModule`
+    - C'est le `UnitOfWork` qui dispatch les événements dans le `CommitAsync`
+      grâce au `DomainEventsDispatcher`
+    - Le `DomainEventsDispatcher` demande au `DomainEventsAccessor` de lister
+      les domain events
+    - Le `DomainEventsAccessor` demande au `DbContext` de lister les entités
+      qui ont été modifiées, et en liste tous les domain events émis
+    - Les `DbContext` sont configurés dans les `DataAccessModule`
+    - Les `DbContext` sont capables de lister les entités qui ont été modifiées
+      car les implémentations de repositories délèguent les opérations au
+      `DbContext`
+- Il y a un `DbContext` par module
+- Il y a un container d'injection de dépendances par module
+
 
 ## Réferences
 
