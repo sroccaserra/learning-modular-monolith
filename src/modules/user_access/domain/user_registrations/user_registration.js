@@ -2,11 +2,18 @@
 
 const { v4: uuidv4 } = require('uuid');
 
+const { BusinessRuleValidationError } = require('../../../../building_blocks/domain/business_rule_validation_error');
+
 const { UserRegistrationId } = require('./user_registration_id');
 const { NewUserRegisteredDomainEvent } = require('./events/new_user_registered_domain_event');
+const { UserLoginMustBeUniqueRule } = require('./rules/user_login_must_be_unique_rule');
 
-/** @typedef {import('./events/domain_event').DomainEvent} DomainEvent */
-/** @typedef {any} UsersCounter */
+/**
+ * @typedef {import('../../../../building_blocks/domain/domain_event').DomainEvent} DomainEvent
+ * @typedef {import('../../../../building_blocks/domain/business_rule').BusinessRule} BusinessRule
+ *
+ * @typedef {import('./users_counter').UsersCounter} UsersCounter
+ */
 
 class UserRegistration {
   /**
@@ -15,10 +22,12 @@ class UserRegistration {
    * @param {string} email
    * @param {string} firstName
    * @param {string} lastName
-   * @param {UsersCounter} _usersCounter
+   * @param {number} usersCount
    * @param {string} confirmLink
    */
-  constructor(login, password, email, firstName, lastName, _usersCounter, confirmLink) {
+  constructor(login, password, email, firstName, lastName, usersCount, confirmLink) {
+    this.checkRule(new UserLoginMustBeUniqueRule(usersCount));
+
     const userRegistrationId = new UserRegistrationId(uuidv4());
 
     /** @type {UserRegistrationId} */
@@ -41,6 +50,14 @@ class UserRegistration {
     ));
   }
 
+  /** @param {BusinessRule} rule */
+  checkRule(rule) {
+    const result = rule.isBroken();
+    if (result) {
+      throw new BusinessRuleValidationError(rule);
+    }
+  }
+
   /** @param {DomainEvent} aDomainEvent */
   addDomainEvent(aDomainEvent) {
     this.domainEvents.push(aDomainEvent);
@@ -55,12 +72,15 @@ class UserRegistration {
    * @param {UsersCounter} usersCounter
    * @param {string} confirmLink
    *
-   * @returns {UserRegistration}
+   * @returns {Promise<UserRegistration>}
    */
-  static registerNewUser(login, password, email, firstName, lastName, usersCounter, confirmLink) {
+  static async registerNewUser(
+    login, password, email, firstName, lastName,
+    usersCounter, confirmLink,
+  ) {
+    const usersCount = await usersCounter.countUsersWithLogin(login);
     return new UserRegistration(
-      login, password, email, firstName, lastName,
-      usersCounter, confirmLink,
+      login, password, email, firstName, lastName, usersCount, confirmLink,
     );
   }
 }

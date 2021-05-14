@@ -1,6 +1,6 @@
 // @ts-check
 
-const { DomainEvent } = require('./domain_event');
+const { DomainEvent } = require('../../../../../building_blocks/domain/domain_event');
 
 /** @typedef {import('../user_registration_id').UserRegistrationId} UserRegistrationId */
 
