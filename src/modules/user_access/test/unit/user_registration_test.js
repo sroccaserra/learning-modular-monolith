@@ -1,12 +1,11 @@
 // @ts-check
 
-const sinon = require('sinon');
-
-const { expect } = require('../../../../building_blocks/test/test_harness');
+const { expect, sinon, assertPublishedDomainEvent } = require('../../../../building_blocks/test/test_harness');
 
 const { BusinessRuleValidationError } = require('../../../../building_blocks/domain/business_rule_validation_error');
 
 const { UserRegistration } = require('../../domain/user_registrations/user_registration');
+const { NewUserRegisteredDomainEvent } = require('../../domain/user_registrations/events/new_user_registered_domain_event');
 const { UsersCounter } = require('../../domain/user_registrations/users_counter');
 
 describe('New user registration', function() {
@@ -27,9 +26,9 @@ describe('New user registration', function() {
     );
 
     // Then
-    const events = _getAllDomainEvents(userRegistration);
-    const newUserRegisteredDomainEvent = events[0];
-    expect(newUserRegisteredDomainEvent).to.exist;
+    const newUserRegisteredDomainEvent = assertPublishedDomainEvent(
+      NewUserRegisteredDomainEvent, userRegistration,
+    );
     expect(newUserRegisteredDomainEvent.userRegistrationId).to.deep.equal(userRegistration.id);
   });
 
@@ -53,7 +52,3 @@ describe('New user registration', function() {
     await expect(registrationPromise).to.be.rejectedWith(BusinessRuleValidationError);
   });
 });
-
-function _getAllDomainEvents(aggregate) {
-  return aggregate.domainEvents;
-}
