@@ -85,6 +85,11 @@ convenir :
       `DbContext`
 - Il y a un `DbContext` par module
 - Il y a un container d'injection de dépendances par module
+- Communication entre modules :
+    - La notification `NewUserRegisteredNotification` répond à l'événement `NewUserRegisteredDomainEvent`
+    - Le `NewUserRegisteredPublishEventHandler` répond à la notification `NewUserRegisteredNotification`
+    - Dans le module UserAccess, le `NewUserRegisteredPublishEventHandler` publie un `NewUserRegisteredIntegrationEvent`
+    - Dans le module Meetings, l'`EventsBusStartup` montre une souscription à `NewUserRegisteredIntegrationEvent`
 
 
 ## Réferences
